@@ -107,11 +107,27 @@ emacs -batch \
   --eval="(dolist (package '(cider paredit clj-refactor json-mode js2-mode python-mode yaml-mode)) (package-install package))" \
   --eval='(print "OK: packages installed")' 
 
-virtualenv $HOME/nix_venv
-source $HOME/nix_venv/bin/activate
-pip install jupyter jupyterlab bash_kernel
-jupyter labextension install jupyterlab-drawio
-# hack due to broken dependency on libzmq somewhere in the zmq toolchain
-cp $(find $HOME/.nix-profile/ -name 'libzmq.so'|head -1) $HOME/nix_venv/lib/libzmq.so.5
-export LD_LIBRARY_PATH=$HOME/nix_venv/lib
-python -m bash_kernel.install
+# set up jupyterlab
+NIX_PYTHON_PACKAGES=(python27 python27Packages.pyzmq python27Packages.virtualenv)
+# attempting to build directly from pip causes all sorts of problems
+# because pip tries to use system packages which aren't working and
+# are unaware of nix.
+# NOTE the SOURCE_DATE_EPOCH hack addresses this farce:
+# '"ZIP does not support timestamps before 1980" when installing wheel'
+# detailed in https://github.com/garbas/pypi2nix/issues/18
+CMD=$(cat <<'EOF'
+virtualenv $HOME/nix_venv;
+source $HOME/nix_venv/bin/activate;
+SOURCE_DATE_EPOCH=$(date +%s);
+pip install jupyter jupyterlab bash_kernel;
+python -m bash_kernel.install;
+jupyter labextension install jupyterlab-drawio;
+EOF
+)
+nix-shell -p $NIX_PYTHON_PACKAGES --run "$CMD"
+
+for pfile in .bashrc .bash_profile; do
+    cat >> ${HOME}/${pfile} <<EOF
+function nix-venv-shell() { nix-enable; CMD='bash --init-file <(echo "source \$HOME/nix_venv/bin/activate") -c "'\$@'"'; nix-shell -p $NIX_PYTHON_PACKAGES --run "\$CMD"; }
+EOF
+done
