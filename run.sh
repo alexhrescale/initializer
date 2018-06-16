@@ -1,4 +1,43 @@
 #!/bin/bash
+####################################################################################################
+#  ___  _   _ _____   ____   ___  _____ ____    _   _  ___ _____   ____ ___ __  __ ____  _  __   __#
+# / _ \| \ | | ____| |  _ \ / _ \| ____/ ___|  | \ | |/ _ \_   _| / ___|_ _|  \/  |  _ \| | \ \ / /#
+#| | | |  \| |  _|   | | | | | | |  _| \___ \  |  \| | | | || |   \___ \| || |\/| | |_) | |  \ V / #
+#| |_| | |\  | |___  | |_| | |_| | |___ ___) | | |\  | |_| || |    ___) | || |  | |  __/| |___| |  #
+# \___/|_| \_|_____| |____/ \___/|_____|____/  |_| \_|\___/ |_|   |____/___|_|  |_|_|   |_____|_|  #
+#                                                                                                  #
+#:os/::sN/:d/:y+:::hdm::::+Nd/::+N/:::ys/::oy/s-+h::my:::sMN::o`-+s/:::s-:h/:s://.o:.:- /...:o-:s.`#
+#NNMMNMNmNNMMMNNMMMMMMNMMmmMMMMMMMMmyso+ossyNN/.odMMMMMMMMMMMMMMMMm+`   sMMMMMh               :NMMm#
+#NNMMMNNNNMMMMNMMMNNMNNNMNNMMMNyy+.         -dh.  /dMMMMMMMMMMMMNs`     .NMNNm.             .odNNy:#
+#MMMMNNNNMNNNNMNNmNNdmMMMNMMMm/`           ``.hd-  `-hMMMMMMMNNMd       `dmddh`            :yhhdmy:#
+#MMMMNNNmNNNmNNNNMMNNMNNNyMMmN:              ``+m+  `.hNMMMMMMMhM/      `dmddy           `/s:``:/+o#
+#MmNmNNmMmMNNNmNNNMNMMmMmdMMNh`               -/+dho/+:/NMMMMMMNMN.     `hmdds         `.+-        #
+#mNMNmMMMNMMNNMNMNMNMMNNMdMMMy              ./::s++NNm/.hMMMMMMMMMo     `hmddy`       .+:`         #
+#MMNNMMMMNMMMMNNNNMNMNNMmyMMMN:.   `      .yNNoydoss+.` +MMMMMMMMMm     `dmddy`     `/o-           #
+#MMmmMMMNNNNMNNNNMNhdMNNMmMMMMNs::odh+:   -s-`          /MMMMMMMMMm     `dmddd.    +yho`           #
+#NNMmNNMMMMNNMNMMMMMNMMNmmNMMMNydo-+.                  `hMMMMMMMMMMs`   `dmmdd+` -sy:`:/:-``       #
+#MMMMMmNmMMNNNNMMMMMNMNNNNdMMMMh                      `smMMMMMMMMMMm-   .mmmddddhhhy: ++/:.--.---.`#
+#MMMNNNNNMmNNmNmMNNMNMNmmNdNMMMM:              .      -y/hMMMMMMNMMN-:  .dmmdddddhho` `       `-+ss#
+#NMMNNmmNMMMMMMMMMMMMMMMNhhmMNMMM+         `/hmd    `  ..sMMMMNNMMMmo:  .dmmmddhhdd.              /#
+#MMMMMMMMMMMMMMMMMhoydmMMmyMMNMMMMs  `  `:oNMMMNmdmNm+ -+sMMMMNNMMMyds/ohNNNddhhhMd             `-y#
+#MMMMMMMMMMMMMo. `      ``:.+ys/omN:   `.-+/.-:-:+o. `  ``smNy///NMMmyMMMMM:-````.`            `   #
+#MMMMMMMMMMMMh             ``/s/msMN+ `///+``..`      ``-`dNhhsshMMMmMMMMMMNMMN+:.``  ..  `-.```   #
+#MMMMMMMMMMMM-    `-.` `: . `.-:ohMMMd-..             ``ohmMmMmNdMMMMMMMMMMMMMMMMmo+--oho+o+-.`    #
+#MMMMMMMMMMMy   `yNdmhyNhyh//o  -+NMMNdy:   ``        .yNMMNNMMMMMMMMMMMMMMMMMNMs/hNdhhhhhhs+/.    #
+#MMMMMMMMMMm.   -yoo:/hMMMMdd:  ./yMMMmyd/.        `./mMMNmysmMMMMMMMMMMMMMMNdd/:yddddNNMMNNNNNdoo/#
+#MMMMMMMMMMo     -////oyMMNhm`  ``yMMMNNNmh+.``.--:smNNNmds/::omddhMMMMMMMMmdy::ydyyydhdNMMNNMMMMNd#
+#MMMMMMMMMoo    `:/-... `++:    `yNNMMNMMMMMNmmdNNMMMNmdh+--omy/ohdMMMMMMhsyo/+hs/ossyddNMMmNdyNMMN#
+#MMMMMMMMm`/     .:.`          .ymNMMMMMMMdhNMNhMMMMMNdyyshMMNm.s+NhhMMms++/:sdms+sssohddNNmMsohMMM#
+#MMMMMMMMM::     .:.         `:mMMMMMMMMMNshmmhmsMmMMdhNMNNmddo/hmMmNMms:-+ohdmMsosysyhNNNdNMyosNMM#
+#MMMMMMy+ymddymyNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNmyoydmmdyyNNMymh+shydNmdNdNNMMMNhdyshhdysssomMMMh/y#
+###   ___ _   _ ____ _____  _    _     _       ____   _    ____ _  __    _    ____ _____ ____    ###
+###  |_ _| \ | / ___|_   _|/ \  | |   | |     |  _ \ / \  / ___| |/ /   / \  / ___| ____/ ___|   ###
+###   | ||  \| \___ \ | | / _ \ | |   | |     | |_) / _ \| |   | ' /   / _ \| |  _|  _| \___ \   ###
+###   | || |\  |___) || |/ ___ \| |___| |___  |  __/ ___ \ |___| . \  / ___ \ |_| | |___ ___) |  ###
+###  |___|_| \_|____/ |_/_/   \_\_____|_____| |_| /_/   \_\____|_|\_\/_/   \_\____|_____|____/   ###
+###                                                                                              ###
+####################################################################################################
+
 set -e
 
 # # TODO: support root-less install
@@ -94,6 +133,7 @@ zsh
 EOF
 )
 nix-env -i $NIX_PACKAGES || true
+
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
 
