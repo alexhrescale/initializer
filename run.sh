@@ -50,14 +50,18 @@ else
     echo ssh keys already set up
 fi
 
-echo fixing bashrc and bash_profile...
+# we need to fix the profile files due to LD_LIBRARY_PATH having
+# conflicts with nix.
+# fix profiles for nix first, so we can log in and start working
+echo fixing bashrc and bash_profile for nix...
 for pfile in .bashrc .bash_profile; do
     backup_number=$(ls -1 ${HOME}/${pfile}*|wc -l)
     cp ${HOME}/${pfile} ${HOME}/${pfile}.${backup_number} 
     cat ${HOME}/${pfile}.${backup_number} |
         grep -v nix-profile |
-	cat > ${HOME}/${pfile}
-    echo 'function enable-nix() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; };' >> ${HOME}/${pfile}
+        grep -v nix-venv-shell |
+    cat > ${HOME}/${pfile}
+    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; };' >> ${HOME}/${pfile}
 done
 
 . $HOME/.nix-profile/etc/profile.d/nix.sh
@@ -90,7 +94,6 @@ zsh
 EOF
 )
 nix-env -i $NIX_PACKAGES || true
-  
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
 
