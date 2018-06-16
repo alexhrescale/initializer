@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# # TODO: support root-less install
+# # see https://nixos.wiki/wiki/Nix_Installation_Guide#Installing_without_root_permissions
+# git clone https://github.com/lethalman/nix-user-chroot.git
+# pushd nix-user-chroot >/dev/null
+#     make
+# popd >/dev/null
+# mkdir ~/.nix
+# nix-user-chroot/nix-user-chroot ~/.nix bash
+# . $HOME/.nix-profile/etc/profile.d/nix.sh
+# this gives you a proot-ed nix installation
+
 INITIALIZER_DIR=$(dirname $0)
 
 unset LD_LIBRARY_PATH
