@@ -120,7 +120,7 @@ lftp
 lnav
 mc
 moreutils
-nodejs-9.11.1
+nodejs-9.11.2
 python2.7
 python2.7-virtualenv
 silver-searcher
