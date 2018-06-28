@@ -151,8 +151,10 @@ python2.7
 python2.7-virtualenv
 silver-searcher
 singularity
+tigervnc
 tmux
 vim
+xauth
 zsh
 zeromq
 zsh
