@@ -43,6 +43,8 @@ set -e
 if [ "$1" == "root" ]; then
     PROOT_BINARY=
 else
+    # NOTE if this fails you may need to set
+    # PROOT_NO_SECCOMP=1
     PROOT_BINARY=$HOME/proot
 fi
 
