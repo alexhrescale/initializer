@@ -40,18 +40,43 @@
 
 set -e
 
-# # TODO: support root-less install
-# # see https://nixos.wiki/wiki/Nix_Installation_Guide#Installing_without_root_permissions
-# git clone https://github.com/lethalman/nix-user-chroot.git
-# pushd nix-user-chroot >/dev/null
-#     make
-# popd >/dev/null
-# mkdir ~/.nix
-# nix-user-chroot/nix-user-chroot ~/.nix bash
-# . $HOME/.nix-profile/etc/profile.d/nix.sh
-# this gives you a proot-ed nix installation
+if [ "$1" == "root" ]; then
+    PROOT_BINARY=
+else
+    PROOT_BINARY=$HOME/proot
+fi
+
+if [ "x" != "x${PROOT_BINARY}" ]; then
+    NIX_DIR=$HOME/.nix
+
+    echo Using proot at $PROOT_BINARY with nix directory in $NIX_DIR
+    # https://nixos.wiki/wiki/Nix_Installation_Guide#PRoot
+    # https://github.com/proot-me/proot-static-build
+    # https://github.com/proot-me/PRoot/issues/133#issuecomment-357781130
+
+    PROOT_RELEASE_URL=https://github.com/proot-me/proot-static-build/releases/download/v5.1.1/proot_5.1.1_x86_64_rc2
+
+    PROOT_COMMAND="$PROOT_BINARY -b $NIX_DIR:/nix bash"
+
+    if [ ! -e $PROOT_BINARY ]; then
+        wget -O $PROOT_BINARY $PROOT_RELEASE_URL
+        chmod +x $PROOT_BINARY
+    fi
+    if [ ! -e $NIX_DIR ]; then
+        mkdir $NIX_DIR
+    fi
+    function run() {
+        $PROOT_COMMAND "$@"
+    }
+else
+    function run() {
+        bash "$@"
+    }
+fi
 
 INITIALIZER_DIR=$(dirname $0)
+
+run <<'EOF_WRAPPER_A'
 
 unset LD_LIBRARY_PATH
 if [ ! -e $HOME/.nix-profile ]; then
@@ -60,8 +85,10 @@ if [ ! -e $HOME/.nix-profile ]; then
     echo '. $HOME/.nix-profile/etc/profile.d/nix.sh' >> $HOME/.bashrc
     echo '. $HOME/.nix-profile/etc/profile.d/nix.sh' >> $HOME/.bash_profile
 else
-    echo nix already installed
+    echo nix already installed: $(which nix-env)
 fi
+
+. $HOME/.nix-profile/etc/profile.d/nix.sh
 
 SSH_TRASH_DIR=/tmp/ssh_trash
 if [ ! -e $SSH_TRASH_DIR ]; then
@@ -103,7 +130,6 @@ for pfile in .bashrc .bash_profile; do
     echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; };' >> ${HOME}/${pfile}
 done
 
-. $HOME/.nix-profile/etc/profile.d/nix.sh
 nix-channel --update
 NIX_PACKAGES=$(cat <<EOF
 emacs
@@ -134,6 +160,7 @@ EOF
 )
 nix-env -i $NIX_PACKAGES || true
 
+# set zsh default
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
 
@@ -171,3 +198,12 @@ for pfile in .bashrc .bash_profile; do
 function nix-venv-shell() { nix-enable; CMD='bash --init-file <(echo "source \$HOME/nix_venv/bin/activate") -c "'\$@'"'; nix-shell -p $NIX_PYTHON_PACKAGES --run "\$CMD"; }
 EOF
 done
+
+EOF_WRAPPER_A
+
+if [ "x" != "x${PROOT_BINARY}" ]; then
+    # FIXME this uglily overwrites the earlier nix-enable()
+    for pfile in .bashrc .bash_profile; do
+        echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; };" >> ${HOME}/${pfile}
+    done
+fi
