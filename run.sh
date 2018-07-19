@@ -41,6 +41,7 @@
 set -e
 
 if [ "$1" == "root" ]; then
+    sudo -v
     PROOT_BINARY=
 else
     # NOTE if this fails you may need to set
