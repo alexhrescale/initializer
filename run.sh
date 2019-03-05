@@ -134,6 +134,7 @@ for pfile in .bashrc .bash_profile; do
 done
 
 nix-channel --update
+NIX_PYTHON_PACKAGES=(python37Full python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas)
 NIX_PACKAGES=$(cat <<EOF
 emacs
 firefox
@@ -149,21 +150,19 @@ lftp
 lnav
 mc
 moreutils
-nodejs-10.6.0
-python2.7
-python2.7-virtualenv
+nodejs-10_x
+${NIX_PYTHON_PACKAGES[@]}
 silver-searcher
 singularity
 tigervnc
 tmux
 vim
-xauth
 zsh
 zeromq
 zsh
 EOF
 )
-nix-env -i $NIX_PACKAGES || true
+nix-env -f '<nixpkgs>' -iA $NIX_PACKAGES || true
 
 # set zsh default
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
@@ -180,7 +179,6 @@ emacs -batch \
   --eval='(print "OK: packages installed")' 
 
 # set up jupyterlab
-NIX_PYTHON_PACKAGES=(python27 python27Packages.pyzmq python27Packages.virtualenv)
 # attempting to build directly from pip causes all sorts of problems
 # because pip tries to use system packages which aren't working and
 # are unaware of nix.
@@ -188,10 +186,12 @@ NIX_PYTHON_PACKAGES=(python27 python27Packages.pyzmq python27Packages.virtualenv
 # '"ZIP does not support timestamps before 1980" when installing wheel'
 # detailed in https://github.com/garbas/pypi2nix/issues/18
 CMD=$(cat <<'EOF'
-virtualenv $HOME/nix_venv;
+python -m venv $HOME/nix_venv;
 source $HOME/nix_venv/bin/activate;
-SOURCE_DATE_EPOCH=$(date +%s);
-pip install jupyter jupyterlab bash_kernel;
+export SOURCE_DATE_EPOCH=$(date +%s);
+# as of 2019-03-04 there are problems running with tornado 6;
+# symptoms: cannot execute cells, cannot run console in jupyter
+pip install 'tornado<6' jupyter jupyterlab bash_kernel;
 python -m bash_kernel.install;
 jupyter labextension install jupyterlab-drawio;
 EOF
@@ -200,7 +200,7 @@ nix-shell -p $NIX_PYTHON_PACKAGES --run "$CMD"
 
 for pfile in .bashrc .bash_profile; do
     cat >> ${HOME}/${pfile} <<EOF
-function nix-venv-shell() { nix-enable; CMD='bash --init-file <(echo "source \$HOME/nix_venv/bin/activate") -c "'\$@'"'; nix-shell -p $NIX_PYTHON_PACKAGES --run "\$CMD"; }
+function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
 EOF
 done
 
@@ -212,3 +212,4 @@ if [ "x" != "x${PROOT_BINARY}" ]; then
         echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; };" >> ${HOME}/${pfile}
     done
 fi
+
