@@ -194,6 +194,10 @@ export SOURCE_DATE_EPOCH=$(date +%s);
 pip install 'tornado<6' jupyter jupyterlab bash_kernel;
 python -m bash_kernel.install;
 jupyter labextension install jupyterlab-drawio;
+# jupyter nbextensions
+pip install jupyter_contrib_nbextensions;
+jupyter contrib nbextension install --user;
+jupyter nbextensions_configurator enable --user;
 EOF
 )
 nix-shell -p $NIX_PYTHON_PACKAGES --run "$CMD"
