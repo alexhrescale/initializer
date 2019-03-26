@@ -53,7 +53,9 @@ else
 fi
 
 if [ "x" != "x${PROOT_BINARY}" ]; then
-    NIX_DIR=$HOME/.nix
+    CUSTOM_ROOT=$HOME/.nix-root
+    NIX_DIR=$HOME/.nix-root/nix
+    NIX_ETC_CONF=$HOME/.nix-root/etc/nix/nix.conf
 
     echo Using proot at $PROOT_BINARY with nix directory in $NIX_DIR
     # https://nixos.wiki/wiki/Nix_Installation_Guide#PRoot
@@ -62,14 +64,18 @@ if [ "x" != "x${PROOT_BINARY}" ]; then
 
     PROOT_RELEASE_URL=https://github.com/proot-me/proot-static-build/releases/download/v5.1.1/proot_5.1.1_x86_64_rc2
 
-    PROOT_COMMAND="$PROOT_BINARY -b $NIX_DIR:/nix bash"
+    PROOT_COMMAND="$PROOT_BINARY -b $NIX_DIR:/nix -b $(dirname $NIX_ETC_CONF):/etc/nix bash"
 
     if [ ! -e $PROOT_BINARY ]; then
         wget -O $PROOT_BINARY $PROOT_RELEASE_URL
         chmod +x $PROOT_BINARY
     fi
     if [ ! -e $NIX_DIR ]; then
-        mkdir $NIX_DIR
+        mkdir -p $NIX_DIR
+    fi
+    if [ ! -e $NIX_ETC_CONF ]; then
+        mkdir -p $(dirname $NIX_ETC_CONF)
+        echo 'sandbox = false' > $NIX_ETC_CONF
     fi
     function run() {
         $PROOT_COMMAND "$@"
@@ -137,7 +143,7 @@ for pfile in .bashrc .bash_profile; do
 done
 
 nix-channel --update
-NIX_PYTHON_PACKAGES=(python37Full python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas)
+NIX_PYTHON_PACKAGES=(python37Full python37Packages.lxml python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas)
 NIX_PACKAGES=$(cat <<EOF
 emacs
 firefox
@@ -206,7 +212,7 @@ jupyter contrib nbextension install --user;
 jupyter nbextensions_configurator enable --user;
 EOF
 )
-nix-shell -p $NIX_PYTHON_PACKAGES --run "$CMD"
+nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD"
 
 for pfile in .bashrc .bash_profile; do
     cat >> ${HOME}/${pfile} <<EOF
