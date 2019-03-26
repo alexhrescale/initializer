@@ -43,6 +43,9 @@ set -e
 if [ "$1" == "root" ]; then
     sudo -v
     PROOT_BINARY=
+    sudo mkdir -p /etc/nix
+    # fix from https://github.com/NixOS/nix/issues/2651
+    echo 'sandbox = false' | sudo tee /etc/nix/nix.conf
 else
     # NOTE if this fails you may need to set
     # PROOT_NO_SECCOMP=1
@@ -147,6 +150,7 @@ jq
 jsonnet
 leiningen
 lftp
+libssh2
 lnav
 mc
 moreutils
@@ -189,6 +193,8 @@ CMD=$(cat <<'EOF'
 python -m venv $HOME/nix_venv;
 source $HOME/nix_venv/bin/activate;
 export SOURCE_DATE_EPOCH=$(date +%s);
+# requires libssh2 in the env
+pip install parallel-ssh;
 # as of 2019-03-04 there are problems running with tornado 6;
 # symptoms: cannot execute cells, cannot run console in jupyter
 pip install 'tornado<6' jupyter jupyterlab bash_kernel;
