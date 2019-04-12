@@ -146,6 +146,7 @@ nix-channel --update
 NIX_PYTHON_PACKAGES=(python37Full python37Packages.lxml python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas)
 NIX_PACKAGES=$(cat <<EOF
 emacs
+fasd
 firefox
 git
 go
@@ -218,6 +219,7 @@ nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD"
 
 for pfile in .bashrc .bash_profile; do
     cat >> ${HOME}/${pfile} <<EOF
+if [ -x "\$(command -v fasd)" ]; then eval "\$(fasd --init auto)"; alias z='fasd_cd -d'; fi
 function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
 EOF
 done
