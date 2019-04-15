@@ -47,8 +47,14 @@ if [ "$1" == "root" ]; then
     # fix from https://github.com/NixOS/nix/issues/2651
     echo 'sandbox = false' | sudo tee /etc/nix/nix.conf
 else
-    # NOTE if this fails you may need to set
-    # PROOT_NO_SECCOMP=1
+    # note that running in proot may lead to mysterious failures; building
+    # pycrypto in proot currently fails for example, due to
+    # https://github.com/termux/proot/issues/25
+    #
+    # this is normally necessary to get this to run, but may be bad practice
+    echo setting PROOT_NO_SECCOMP=1
+    sleep 2
+    PROOT_NO_SECCOMP=1
     PROOT_BINARY=$HOME/proot
 fi
 
