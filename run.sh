@@ -171,7 +171,7 @@ moreutils
 nodejs-10_x
 openssl
 ${NIX_PYTHON_PACKAGES[@]}
-silver-searcher
+ripgrep
 singularity
 tigervnc
 tmux
