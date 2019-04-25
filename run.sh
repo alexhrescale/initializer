@@ -194,8 +194,9 @@ emacs -batch \
   --eval='(add-to-list '\''package-archives '\''("melpa" . "https://melpa.org/packages/") t)' \
   --eval='(package-refresh-contents)' \
   --eval="(dolist (package '(use-package magit projectile undo-tree ace-window expand-region restclient eval-in-repl)) (package-install package))" \
-  --eval="(dolist (package '(cider paredit clj-refactor json-mode js2-mode python-mode yaml-mode)) (package-install package))" \
-  --eval='(print "OK: packages installed")' 
+  --eval="(dolist (package '(${NIX_EMACS_PACKAGES[@]})) (package-install package))" \
+  --eval='(print "OK: packages installed")' &
+
 
 # set up jupyterlab
 # attempting to build directly from pip causes all sorts of problems
@@ -221,7 +222,7 @@ jupyter contrib nbextension install --user;
 jupyter nbextensions_configurator enable --user;
 EOF
 )
-nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD"
+nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD" &
 
 for pfile in .bashrc .bash_profile; do
     cat >> ${HOME}/${pfile} <<EOF
