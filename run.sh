@@ -149,7 +149,16 @@ for pfile in .bashrc .bash_profile; do
 done
 
 nix-channel --update
-NIX_PYTHON_PACKAGES=(python37Full python37Packages.lxml python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas python37Packages.matplotlib)
+NIX_PYTHON_PACKAGES=(
+  python37Full
+  python37Packages.lxml
+  python37Packages.pyzmq
+  python37Packages.pip
+  python37Packages.numpy
+  python37Packages.pandas
+  python37Packages.matplotlib
+)
+NIX_EMACS_PACKAGES=(cider paredit clj-refactor json-mode js2-mode python-mode yaml-mode)
 NIX_PACKAGES=$(cat <<EOF
 emacs
 fasd
