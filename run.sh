@@ -206,6 +206,31 @@ emacs -batch \
   --eval="(dolist (package '(${NIX_EMACS_PACKAGES[@]})) (package-install package))" \
   --eval='(print "OK: packages installed")' &
 
+# set up vim
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+if [ ! -e $HOME/.vimrc ]; then
+    cat >> $HOME/.vimrc <EOF
+call plug#begin('~/.vim/plugged')
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-unimpaired'
+Plug 'kien/ctrlp.vim'
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+call plug#end()
+
+syntax on
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set autoindent
+set nowrap
+set hlsearch
+set ic
+set autochdir
+EOF
+    vim -E -s -u /root/.vimrc +PlugInstall +qall
+fi
+
 
 # set up jupyterlab
 # attempting to build directly from pip causes all sorts of problems
