@@ -145,7 +145,7 @@ for pfile in .bashrc .bash_profile; do
         grep -v nix-profile |
         grep -v nix-venv-shell |
     cat > ${HOME}/${pfile}
-    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; };' >> ${HOME}/${pfile}
+    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; $* };' >> ${HOME}/${pfile}
 done
 
 nix-channel --update
