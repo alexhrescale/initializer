@@ -196,6 +196,33 @@ nix-env -f '<nixpkgs>' -iA $NIX_PACKAGES || true
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
 
+# set up jupyterlab
+# attempting to build directly from pip causes all sorts of problems
+# because pip tries to use system packages which aren't working and
+# are unaware of nix.
+# NOTE the SOURCE_DATE_EPOCH hack addresses this farce:
+# '"ZIP does not support timestamps before 1980" when installing wheel'
+# detailed in https://github.com/garbas/pypi2nix/issues/18
+CMD=$(cat <<'EOF'
+python -m venv $HOME/nix_venv;
+source $HOME/nix_venv/bin/activate;
+export SOURCE_DATE_EPOCH=$(date +%s);
+# requires libssh2 in the env
+pip install parallel-ssh;
+# as of 2019-03-04 there are problems running with tornado 6;
+# symptoms: cannot execute cells, cannot run console in jupyter
+pip install 'tornado<6' jupyter jupyterlab bash_kernel;
+python -m bash_kernel.install;
+jupyter labextension install jupyterlab-drawio;
+jupyter labextension install @jupyter-widgets/jupyterlab-manager;
+# jupyter nbextensions
+pip install jupyter_contrib_nbextensions;
+jupyter contrib nbextension install --user;
+jupyter nbextensions_configurator enable --user;
+EOF
+)
+nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD" &
+
 # set up emacs
 emacs -batch \
   --eval='(require '\''package)' \
@@ -231,32 +258,7 @@ EOF
     vim -E -s -u /root/.vimrc +PlugInstall +qall
 fi
 
-
-# set up jupyterlab
-# attempting to build directly from pip causes all sorts of problems
-# because pip tries to use system packages which aren't working and
-# are unaware of nix.
-# NOTE the SOURCE_DATE_EPOCH hack addresses this farce:
-# '"ZIP does not support timestamps before 1980" when installing wheel'
-# detailed in https://github.com/garbas/pypi2nix/issues/18
-CMD=$(cat <<'EOF'
-python -m venv $HOME/nix_venv;
-source $HOME/nix_venv/bin/activate;
-export SOURCE_DATE_EPOCH=$(date +%s);
-# requires libssh2 in the env
-pip install parallel-ssh;
-# as of 2019-03-04 there are problems running with tornado 6;
-# symptoms: cannot execute cells, cannot run console in jupyter
-pip install 'tornado<6' jupyter jupyterlab bash_kernel;
-python -m bash_kernel.install;
-jupyter labextension install jupyterlab-drawio;
-# jupyter nbextensions
-pip install jupyter_contrib_nbextensions;
-jupyter contrib nbextension install --user;
-jupyter nbextensions_configurator enable --user;
-EOF
-)
-nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD" &
+wait
 
 for pfile in .bashrc .bash_profile; do
     cat >> ${HOME}/${pfile} <<EOF
