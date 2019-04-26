@@ -145,7 +145,7 @@ for pfile in .bashrc .bash_profile; do
         grep -v nix-profile |
         grep -v nix-venv-shell |
     cat > ${HOME}/${pfile}
-    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; $* };' >> ${HOME}/${pfile}
+    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; $*; };' >> ${HOME}/${pfile}
 done
 
 nix-channel --update
@@ -237,7 +237,7 @@ emacs -batch \
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 if [ ! -e $HOME/.vimrc ]; then
-    cat >> $HOME/.vimrc <EOF
+    cat >> $HOME/.vimrc << EOF
 call plug#begin('~/.vim/plugged')
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-unimpaired'
@@ -255,7 +255,7 @@ set hlsearch
 set ic
 set autochdir
 EOF
-    vim -E -s -u /root/.vimrc +PlugInstall +qall
+    vim -E -s -u $HOME/.vimrc +PlugInstall +qall
 fi
 
 wait
@@ -272,7 +272,7 @@ EOF_WRAPPER_A
 if [ "x" != "x${PROOT_BINARY}" ]; then
     # FIXME this uglily overwrites the earlier nix-enable()
     for pfile in .bashrc .bash_profile; do
-        echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; };" >> ${HOME}/${pfile}
+        echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; \\$*; };" >> ${HOME}/${pfile}
     done
 fi
 
