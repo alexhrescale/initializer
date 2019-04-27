@@ -151,6 +151,7 @@ done
 nix-channel --update
 NIX_PYTHON_PACKAGES=(
   python37Full
+  python37Packages.ipython
   python37Packages.lxml
   python37Packages.pyzmq
   python37Packages.pip
@@ -206,7 +207,7 @@ sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/i
 CMD=$(cat <<'EOF'
 python -m venv $HOME/nix_venv;
 source $HOME/nix_venv/bin/activate;
-export SOURCE_DATE_EPOCH=$(date +%s);
+unset SOURCE_DATE_EPOCH;
 # requires libssh2 in the env
 pip install parallel-ssh;
 # as of 2019-03-04 there are problems running with tornado 6;
@@ -221,7 +222,9 @@ jupyter contrib nbextension install --user;
 jupyter nbextensions_configurator enable --user;
 EOF
 )
-nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD" &
+# libffi openssl  # for parallel-ssh build
+PARALLEL_SSH_PACKAGES=(libffi openssl libssh2)
+nix-shell -p ${NIX_PYTHON_PACKAGES[@]} ${PARALLEL_SSH_PACKAGES[@]} --run "$CMD" &
 
 # set up emacs
 emacs -batch \
