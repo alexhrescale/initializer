@@ -59,9 +59,8 @@ else
 fi
 
 if [ "x" != "x${PROOT_BINARY}" ]; then
-    CUSTOM_ROOT=$HOME/.nix-root
-    NIX_DIR=$HOME/.nix-root/nix
-    NIX_ETC_CONF=$HOME/.nix-root/etc/nix/nix.conf
+    NIX_DIR=${NIX_DIR-$HOME/.nix-root}
+    NIX_ETC_CONF=${NIX_ETC_CONF-$NIX_DIR/nix.conf}
 
     echo Using proot at $PROOT_BINARY with nix directory in $NIX_DIR
     # https://nixos.wiki/wiki/Nix_Installation_Guide#PRoot
