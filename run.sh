@@ -40,7 +40,12 @@
 
 set -e
 
-if [ "$1" == "root" ]; then
+if [ $USER == "root" ]; then
+    mkdir -p /nix /etc/nix
+    # this hack force-enables single user install by root;
+    # see https://github.com/NixOS/nix/issues/936
+    echo 'build-users-group =' > /etc/nix/nix.conf
+elif [ "$1" == "root" ]; then
     sudo -v
     PROOT_BINARY=
     sudo mkdir -p /etc/nix
