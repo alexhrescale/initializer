@@ -227,7 +227,7 @@ jupyter nbextensions_configurator enable --user;
 EOF
 )
 # libffi openssl  # for parallel-ssh build
-PARALLEL_SSH_PACKAGES=(libffi openssl libssh2)
+PARALLEL_SSH_PACKAGES=(libffi openssl libssh2 cmake)
 nix-shell -p ${NIX_PYTHON_PACKAGES[@]} ${PARALLEL_SSH_PACKAGES[@]} --run "$CMD" &
 
 # set up emacs
