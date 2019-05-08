@@ -224,6 +224,10 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager;
 pip install jupyter_contrib_nbextensions;
 jupyter contrib nbextension install --user;
 jupyter nbextensions_configurator enable --user;
+jupyter labextension install jupyterlab-spreadsheet;
+pip install ipysheet;
+jupyter labextension install ipysheet;
+pip install altair
 EOF
 )
 # libffi openssl  # for parallel-ssh build
