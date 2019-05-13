@@ -197,6 +197,12 @@ EOF
 )
 nix-env -f '<nixpkgs>' -iA $NIX_PACKAGES || true
 
+for pfile in .bashrc .bash_profile; do
+    cat >> ${HOME}/${pfile} <<EOF
+if [ -x "\$(command -v fasd)" ]; then eval "\$(fasd --init auto)"; alias z='fasd_cd -d'; fi
+function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
+EOF
+
 # set zsh default
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
@@ -271,12 +277,6 @@ EOF
 fi
 
 wait
-
-for pfile in .bashrc .bash_profile; do
-    cat >> ${HOME}/${pfile} <<EOF
-if [ -x "\$(command -v fasd)" ]; then eval "\$(fasd --init auto)"; alias z='fasd_cd -d'; fi
-function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
-EOF
 done
 
 EOF_WRAPPER_A
