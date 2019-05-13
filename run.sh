@@ -265,6 +265,7 @@ set nowrap
 set hlsearch
 set ic
 set autochdir
+set cursorline
 EOF
     vim -E -s -u $HOME/.vimrc +PlugInstall +qall
 fi
