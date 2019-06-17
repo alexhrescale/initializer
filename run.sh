@@ -40,7 +40,12 @@
 
 set -e
 
-if [ "$1" == "root" ]; then
+if [ $USER == "root" ]; then
+    mkdir -p /nix /etc/nix
+    # this hack force-enables single user install by root;
+    # see https://github.com/NixOS/nix/issues/936
+    echo 'build-users-group =' > /etc/nix/nix.conf
+elif [ "$1" == "root" ]; then
     sudo -v
     PROOT_BINARY=
     sudo mkdir -p /etc/nix
@@ -59,9 +64,8 @@ else
 fi
 
 if [ "x" != "x${PROOT_BINARY}" ]; then
-    CUSTOM_ROOT=$HOME/.nix-root
-    NIX_DIR=$HOME/.nix-root/nix
-    NIX_ETC_CONF=$HOME/.nix-root/etc/nix/nix.conf
+    NIX_DIR=${NIX_DIR-$HOME/.nix-root}
+    NIX_ETC_CONF=${NIX_ETC_CONF-$NIX_DIR/nix.conf}
 
     echo Using proot at $PROOT_BINARY with nix directory in $NIX_DIR
     # https://nixos.wiki/wiki/Nix_Installation_Guide#PRoot
@@ -145,11 +149,21 @@ for pfile in .bashrc .bash_profile; do
         grep -v nix-profile |
         grep -v nix-venv-shell |
     cat > ${HOME}/${pfile}
-    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; };' >> ${HOME}/${pfile}
+    echo 'function nix-enable() { unset LD_LIBRARY_PATH; . $HOME/.nix-profile/etc/profile.d/nix.sh; $*; };' >> ${HOME}/${pfile}
 done
 
 nix-channel --update
-NIX_PYTHON_PACKAGES=(python37Full python37Packages.lxml python37Packages.pyzmq python37Packages.pip python37Packages.numpy python37Packages.pandas)
+NIX_PYTHON_PACKAGES=(
+  python37Full
+  python37Packages.ipython
+  python37Packages.lxml
+  python37Packages.pyzmq
+  python37Packages.pip
+  python37Packages.numpy
+  python37Packages.pandas
+  python37Packages.matplotlib
+)
+NIX_EMACS_PACKAGES=(cider paredit clj-refactor json-mode js2-mode python-mode yaml-mode)
 NIX_PACKAGES=$(cat <<EOF
 emacs
 fasd
@@ -183,19 +197,15 @@ EOF
 )
 nix-env -f '<nixpkgs>' -iA $NIX_PACKAGES || true
 
+for pfile in .bashrc .bash_profile; do
+    cat >> ${HOME}/${pfile} <<EOF
+if [ -x "\$(command -v fasd)" ]; then eval "\$(fasd --init auto)"; alias z='fasd_cd -d'; fi
+function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
+EOF
+
 # set zsh default
 echo 'set-option -g default-shell $HOME/.nix-profile/bin/zsh' > $HOME/.tmux.conf
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
-
-# set up emacs
-emacs -batch \
-  --eval='(require '\''package)' \
-  --eval='(package-initialize)' \
-  --eval='(add-to-list '\''package-archives '\''("melpa" . "https://melpa.org/packages/") t)' \
-  --eval='(package-refresh-contents)' \
-  --eval="(dolist (package '(use-package magit projectile undo-tree ace-window expand-region restclient eval-in-repl)) (package-install package))" \
-  --eval="(dolist (package '(cider paredit clj-refactor json-mode js2-mode python-mode yaml-mode)) (package-install package))" \
-  --eval='(print "OK: packages installed")' 
 
 # set up jupyterlab
 # attempting to build directly from pip causes all sorts of problems
@@ -207,7 +217,7 @@ emacs -batch \
 CMD=$(cat <<'EOF'
 python -m venv $HOME/nix_venv;
 source $HOME/nix_venv/bin/activate;
-export SOURCE_DATE_EPOCH=$(date +%s);
+unset SOURCE_DATE_EPOCH;
 # requires libssh2 in the env
 pip install parallel-ssh;
 # as of 2019-03-04 there are problems running with tornado 6;
@@ -215,19 +225,58 @@ pip install parallel-ssh;
 pip install 'tornado<6' jupyter jupyterlab bash_kernel;
 python -m bash_kernel.install;
 jupyter labextension install jupyterlab-drawio;
+jupyter labextension install @jupyter-widgets/jupyterlab-manager;
 # jupyter nbextensions
 pip install jupyter_contrib_nbextensions;
 jupyter contrib nbextension install --user;
 jupyter nbextensions_configurator enable --user;
+jupyter labextension install jupyterlab-spreadsheet;
+pip install ipysheet;
+jupyter labextension install ipysheet;
+pip install altair
 EOF
 )
-nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "$CMD"
+# libffi openssl  # for parallel-ssh build
+PARALLEL_SSH_PACKAGES=(libffi openssl libssh2 cmake)
+nix-shell -p ${NIX_PYTHON_PACKAGES[@]} ${PARALLEL_SSH_PACKAGES[@]} --run "$CMD" &
 
-for pfile in .bashrc .bash_profile; do
-    cat >> ${HOME}/${pfile} <<EOF
-if [ -x "\$(command -v fasd)" ]; then eval "\$(fasd --init auto)"; alias z='fasd_cd -d'; fi
-function nix-venv-shell() { nix-enable; CMD='bash -c ". \$HOME/nix_venv/bin/activate; '\$@'"'; nix-shell -p ${NIX_PYTHON_PACKAGES[@]} --run "\$CMD"; }
+# set up emacs
+emacs -batch \
+  --eval='(require '\''package)' \
+  --eval='(package-initialize)' \
+  --eval='(add-to-list '\''package-archives '\''("melpa" . "https://melpa.org/packages/") t)' \
+  --eval='(package-refresh-contents)' \
+  --eval="(dolist (package '(use-package magit projectile undo-tree ace-window expand-region restclient eval-in-repl)) (package-install package))" \
+  --eval="(dolist (package '(${NIX_EMACS_PACKAGES[@]})) (package-install package))" \
+  --eval='(print "OK: packages installed")' &
+
+# set up vim
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+if [ ! -e $HOME/.vimrc ]; then
+    cat >> $HOME/.vimrc << EOF
+call plug#begin('~/.vim/plugged')
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-unimpaired'
+Plug 'kien/ctrlp.vim'
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+call plug#end()
+
+syntax on
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set autoindent
+set nowrap
+set hlsearch
+set ic
+set autochdir
+set cursorline
 EOF
+    vim -E -s -u $HOME/.vimrc +PlugInstall +qall
+fi
+
+wait
 done
 
 EOF_WRAPPER_A
@@ -235,7 +284,7 @@ EOF_WRAPPER_A
 if [ "x" != "x${PROOT_BINARY}" ]; then
     # FIXME this uglily overwrites the earlier nix-enable()
     for pfile in .bashrc .bash_profile; do
-        echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; };" >> ${HOME}/${pfile}
+        echo "function nix-enable() { unset LD_LIBRARY_PATH; $PROOT_COMMAND --rcfile $HOME/.nix-profile/etc/profile.d/nix.sh; \\$*; };" >> ${HOME}/${pfile}
     done
 fi
 
